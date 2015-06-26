@@ -20,11 +20,31 @@ public class HttpsServer extends ServerResource {
         String rootURI = getRootRef().toString();
         String routedPart = getReference().getBaseRef().toString();
         String remainingPart = getReference().getRemainingPart();
+        String command = "";
+        String str = "";
 
-        String[] str = remainingPart.split("/");
-        System.out.println(Arrays.toString(str));
-        if(str.length < 2) return error404();
-        String command = str[1];
+        //1 localhost:9080/api/isOnline
+        //2 localhost:9080/api/isOnline/
+        //3 localhost:9080/api/usuario?usuarioID=something
+        //4 localhost:9080/api/
+        //5 localhost:9080/api
+        if (!remainingPart.isEmpty()) { //solves 5
+            if (remainingPart.startsWith("/")) { //solves 4
+                str = remainingPart.substring(1); //removes first /
+                if(str.contains("?")) {
+                    int spaceIndex = str.indexOf("?");
+                    if (spaceIndex != -1) {
+                        command = str.substring(0, spaceIndex); //solves 4
+                    }
+                } else {
+                    if(str.charAt(str.length()-1)=='/') {
+                        str = str.substring(0, str.length() - 1); //solves 2
+                    }
+                    command = str; //solves 1, and sets for 2
+                }
+            }
+        }
+        if(command.isEmpty()) command = str;
         String retStr = null;
         switch (command) {
             case "isOnline":
@@ -123,6 +143,23 @@ public class HttpsServer extends ServerResource {
     }
 
     @Put("json")
+    public String restPut() {
+        String resourceURI = getReference().toString();
+        String rootURI = getRootRef().toString();
+        String routedPart = getReference().getBaseRef().toString();
+        String remainingPart = getReference().getRemainingPart();
+
+        String[] str = remainingPart.split("/");
+        System.out.println(Arrays.toString(str));
+        if(str.length < 2) return error404();
+        String command = str[1];
+        String retStr = null;
+        switch (command) {
+            case "tarea":
+
+        }
+        return null;
+    }
 
     private String error404() {
         return createJson("status", "FAIL", "content", "404");
