@@ -42,8 +42,8 @@ public class SmackCcsClient {
     private static final String GCM_ELEMENT_NAME = "gcm";
     private static final String GCM_NAMESPACE = "google:mobile:data";
 
-    private static final String YOUR_PROJECT_ID = "fillme";
-    private static final String YOUR_API_KEY = "fillme"; // your API Key
+    public static final String YOUR_PROJECT_ID = "fillme";
+    public static final String YOUR_API_KEY = "fillme"; // your API Key
     private static boolean run = true;
 
     static {
@@ -58,7 +58,7 @@ public class SmackCcsClient {
         });
     }
 
-    private XMPPTCPConnection connection;
+    public XMPPTCPConnection connection;
 
     /**
      * Indicates whether the connection is in draining state, which means that it
@@ -122,7 +122,7 @@ public class SmackCcsClient {
 
         // Send an ECHO response back
         String echo = createJsonMessage(from, nextMessageId(), payload,
-                "echo:CollapseKey", null, false);
+                "echo:CollapseKey", false);
 
         try {
             sendDownstreamMessage(echo);
@@ -175,20 +175,16 @@ public class SmackCcsClient {
      *         "ack/nack" (Required).
      * @param payload Message content intended for the application. (Optional).
      * @param collapseKey GCM collapse_key parameter (Optional).
-     * @param timeToLive GCM time_to_live parameter (Optional).
      * @param delayWhileIdle GCM delay_while_idle parameter (Optional).
      * @return JSON encoded GCM message.
      */
     public static String createJsonMessage(String to, String messageId,
-                                           Map<String, String> payload, String collapseKey, Long timeToLive,
+                                           Map<String, String> payload, String collapseKey,
                                            Boolean delayWhileIdle) {
         Map<String, Object> message = new HashMap<String, Object>();
         message.put("to", to);
         if (collapseKey != null) {
             message.put("collapse_key", collapseKey);
-        }
-        if (timeToLive != null) {
-            message.put("time_to_live", timeToLive);
         }
         if (delayWhileIdle != null && delayWhileIdle) {
             message.put("delay_while_idle", true);
@@ -336,69 +332,10 @@ public class SmackCcsClient {
 
         //TODO
 
-        SmackCcsClient firstConnection = new SmackCcsClient();
-        SmackCcsClient secondConnection = new SmackCcsClient();
-        SmackCcsClient activeConnection = firstConnection;
-        boolean createdNewConnection = false;
-        boolean using = true;
-        boolean cleanedOld = false;
-        activeConnection.connect(YOUR_PROJECT_ID, YOUR_API_KEY);
 
-        // Send a sample hello downstream message to a device.
-        String messageId = activeConnection.nextMessageId();
-        Map<String, String> payload = new HashMap<String, String>();
-        payload.put("Message", "Ahha, it works!");
-        payload.put("CCS", "Dummy Message");
-        payload.put("EmbeddedMessageId", messageId);
-        String collapseKey = "sample";
-        Long timeToLive = 10000L;
-        /*
-        String message = createJsonMessage(YOUR_PHONE_REG_ID, messageId, payload,
-            collapseKey, timeToLive, true);
-
-        activeConnection.sendDownstreamMessage(message);
-        logger.info("Message sent.");
-        */
-        while(run)
-        {
-            if(activeConnection.connectionDraining) {
-                if(!createdNewConnection) {
-                    if(using) {
-                        activeConnection = secondConnection;
-                        activeConnection.connect(YOUR_PROJECT_ID, YOUR_API_KEY);
-                        using = false;
-                        cleanedOld = false;
-                        toSend(activeConnection);
-                    } else {
-                        activeConnection = firstConnection;
-                        activeConnection.connect(YOUR_PROJECT_ID, YOUR_API_KEY);
-                        using = true;
-                        cleanedOld = false;
-                        toSend(activeConnection);
-                    }
-                    createdNewConnection = true;
-                } else {
-                    createdNewConnection = false;
-                }
-            }
-            if(!cleanedOld) {
-                if(using) {
-                    if(secondConnection.connection.isSocketClosed()) {
-                        secondConnection = new SmackCcsClient();  //GC old one and create a new one
-                        cleanedOld = true;
-                    }
-                } else {
-                    if (firstConnection.connection.isSocketClosed()) {
-                        secondConnection = new SmackCcsClient();  //GC old one and create a new one
-                        cleanedOld = true;
-                    }
-                }
-            }
-
-        }
     }
 
-    private static void toSend(SmackCcsClient activeConnection) {
+    public static void toSend(SmackCcsClient activeConnection) {
         Iterator it = toResend.iterator();
         while(it.hasNext()) {
             try {

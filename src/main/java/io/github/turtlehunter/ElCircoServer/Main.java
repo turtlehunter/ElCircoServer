@@ -1,10 +1,17 @@
 package io.github.turtlehunter.ElCircoServer;
 
+import io.github.turtlehunter.ElCircoServer.objects.Grupo;
+import io.github.turtlehunter.ElCircoServer.objects.Usuario;
 import org.apache.log4j.*;
 import org.restlet.Component;
 import org.restlet.Server;
 import org.restlet.data.Protocol;
 import org.restlet.resource.ServerResource;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class Main extends ServerResource {
     public static Server server;
@@ -12,6 +19,10 @@ public class Main extends ServerResource {
     public static String clientVersion = "1.0";
     public static Logger logger;
     public static Database database;
+    private static boolean run = true;
+    private static SmackCcsClient firstConnection;
+    private static SmackCcsClient secondConnection;
+    public static SmackCcsClient activeConnection;
 
     public static void main(String[] args) throws Exception {
         ConsoleAppender console = new ConsoleAppender(); //create appender
@@ -42,6 +53,52 @@ public class Main extends ServerResource {
         // Now, let's start the component!
         // Note that the HTTP server connector is also automatically started.
         component.start();
+
+        firstConnection = new SmackCcsClient();
+        secondConnection = new SmackCcsClient();
+        activeConnection = firstConnection;
+        boolean createdNewConnection = false;
+        boolean using = true;
+        boolean cleanedOld = false;
+        activeConnection.connect(SmackCcsClient.YOUR_PROJECT_ID, SmackCcsClient.YOUR_API_KEY);
+
+        while(run)
+        {
+            if(activeConnection.connectionDraining) {
+                if(!createdNewConnection) {
+                    if(using) {
+                        activeConnection = secondConnection;
+                        activeConnection.connect(SmackCcsClient.YOUR_PROJECT_ID, SmackCcsClient.YOUR_API_KEY);
+                        using = false;
+                        cleanedOld = false;
+                        SmackCcsClient.toSend(activeConnection);
+                    } else {
+                        activeConnection = firstConnection;
+                        activeConnection.connect(SmackCcsClient.YOUR_PROJECT_ID, SmackCcsClient.YOUR_API_KEY);
+                        using = true;
+                        cleanedOld = false;
+                        SmackCcsClient.toSend(activeConnection);
+                    }
+                    createdNewConnection = true;
+                } else {
+                    createdNewConnection = false;
+                }
+            }
+            if(!cleanedOld) {
+                if(using) {
+                    if(secondConnection.connection.isSocketClosed()) {
+                        secondConnection = new SmackCcsClient();  //GC old one and create a new one
+                        cleanedOld = true;
+                    }
+                } else {
+                    if (firstConnection.connection.isSocketClosed()) {
+                        secondConnection = new SmackCcsClient();  //GC old one and create a new one
+                        cleanedOld = true;
+                    }
+                }
+            }
+
+        }
 
     }
 }

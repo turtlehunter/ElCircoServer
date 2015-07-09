@@ -1,22 +1,46 @@
 package io.github.turtlehunter.ElCircoServer.objects;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.github.turtlehunter.ElCircoServer.Main;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class Usuario {
+public class Usuario implements Serializable {
     public UUID usuarioID;
     public String GCM;
     public String usuario;
     public String password;
     public String realName;
-    public ArrayList<Grupo> grupos;
+    public ArrayList<UUID> grupos;
+    public ArrayList<String> permissions;
+
+    public Usuario(UUID usuarioID, String GCM, String usuario, String password, String realName, ArrayList<UUID> grupos, ArrayList<String> permissions) {
+        this.usuarioID = usuarioID;
+        this.GCM = GCM;
+        this.usuario = usuario;
+        this.password = password;
+        this.realName = realName;
+        this.grupos = grupos;
+        this.permissions = permissions;
+    }
+
+    public Usuario(Map<String, String> te) {
+        this.GCM = te.get("GCM");
+        this.usuario = te.get("usuario");
+        this.grupos = new Gson().fromJson(te.get("grupos"), new TypeToken<ArrayList<Grupo>>() {
+        }.getType());
+        this.usuarioID = UUID.fromString(te.get("usuarioID"));
+        this.password = te.get("password");
+        this.realName = te.get("realName");
+        this.permissions = new Gson().fromJson(te.get("permissions"), new TypeToken<ArrayList<String>>(){}.getType());
+    }
 
     public UUID getUsuarioID() {
         return usuarioID;
@@ -58,20 +82,28 @@ public class Usuario {
         this.realName = realName;
     }
 
-    public ArrayList<Grupo> getGrupos() {
+    public ArrayList<UUID> getGrupos() {
         return grupos;
     }
 
-    public void setGrupos(ArrayList<Grupo> grupos) {
+    public void setGrupos(ArrayList<UUID> grupos) {
         this.grupos = grupos;
     }
 
-    public void addGrupo(Grupo grupo) {
+    public void addGrupo(UUID grupo) {
         this.grupos.add(grupo);
     }
 
-    public void removeGrupo(Grupo grupo) {
+    public void removeGrupo(UUID grupo) {
         this.grupos.remove(grupo);
+    }
+
+    public ArrayList<String> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(ArrayList<String> permissions) {
+        this.permissions = permissions;
     }
 
     @Override
@@ -89,6 +121,7 @@ public class Usuario {
                 .append(password, usuario1.password)
                 .append(realName, usuario1.realName)
                 .append(grupos, usuario1.grupos)
+                .append(permissions, usuario1.permissions)
                 .isEquals();
     }
 
@@ -101,6 +134,7 @@ public class Usuario {
                 .append(password)
                 .append(realName)
                 .append(grupos)
+                .append(permissions)
                 .toHashCode();
     }
 
@@ -111,6 +145,7 @@ public class Usuario {
         map.put("grupos", new Gson().toJson(grupos));
         map.put("usuario", usuario);
         map.put("realName", realName);
+        map.put("permissions", new Gson().toJson(permissions));
         return map;
     }
 
@@ -121,6 +156,7 @@ public class Usuario {
         this.setUsuarioID(usuario.getUsuarioID());
         this.setPassword(usuario.getPassword());
         this.setRealName(usuario.getRealName());
+        this.setPermissions(usuario.getPermissions());
     }
 
     public Usuario(String usuarioID) {

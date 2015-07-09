@@ -1,17 +1,18 @@
 package io.github.turtlehunter.ElCircoServer;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.github.turtlehunter.ElCircoServer.objects.*;
+import org.jivesoftware.smack.SmackException;
 import org.json.simple.JSONObject;
-import org.restlet.resource.Get;
-import org.restlet.resource.Post;
-import org.restlet.resource.Put;
-import org.restlet.resource.ServerResource;
+import org.restlet.resource.*;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HttpsServer extends ServerResource {
     @Get("txt")
@@ -137,12 +138,72 @@ public class HttpsServer extends ServerResource {
                         "content", "Object doesnt exists") : createJson(
                         "status", "OK",
                         "content", retStr);
+            case "sync":
+                try {
+                    Map<String, String> parsed = splitQuery(new URL(resourceURI));
+                    String usuarioID = parsed.get("usuarioID");
+                    Usuario usuario = new Usuario(usuarioID);
+                    ArrayList<Mensaje> mensajes = new ArrayList<>();
+                    ArrayList<Tarea> tareas = new ArrayList<>();
+                    ArrayList<Prueba> pruebas = new ArrayList<>();
+                    ArrayList<Juntada> juntadas = new ArrayList<>();
+                    for(UUID uuid: Main.database.mensajeDB.keySet()) {
+                        Mensaje mensaje = Main.database.mensajeDB.get(uuid);
+                        for(UUID uuid1: mensaje.getGrupos()) {
+                            Grupo grupo = Main.database.grupoDB.get(uuid1);
+                            if(grupo.getUsuarios().contains(usuario.getUsuarioID())) {
+                                mensajes.add(mensaje);
+                                break;
+                            }
+                        }
+                    }
+                    for(UUID uuid: Main.database.tareasDB.keySet()) {
+                        Tarea tarea = Main.database.tareasDB.get(uuid);
+                        for(UUID uuid1: tarea.getGrupos()) {
+                            Grupo grupo = Main.database.grupoDB.get(uuid1);
+                            if(grupo.getUsuarios().contains(usuario.getUsuarioID())) {
+                                tareas.add(tarea);
+                                break;
+                            }
+                        }
+                    }
+                    for(UUID uuid: Main.database.pruebaDB.keySet()) {
+                        Prueba prueba = Main.database.pruebaDB.get(uuid);
+                        for(UUID uuid1: prueba.getGrupos()) {
+                            Grupo grupo = Main.database.grupoDB.get(uuid1);
+                            if(grupo.getUsuarios().contains(usuario.getUsuarioID())) {
+                                pruebas.add(prueba);
+                                break;
+                            }
+                        }
+                    }
+                    for(UUID uuid: Main.database.juntadaDB.keySet()) {
+                        Juntada juntada = Main.database.juntadaDB.get(uuid);
+                        for(UUID uuid1: juntada.getGrupos()) {
+                            Grupo grupo = Main.database.grupoDB.get(uuid1);
+                            if (grupo.getUsuarios().contains(usuario.getUsuarioID())) {
+                                juntadas.add(juntada);
+                                break;
+                            }
+                        }
+                    }
+                    return createJson("status", "OK",
+                                      "mensajes", new Gson().toJson(mensajes, new TypeToken<ArrayList<Mensaje>>(){}.getType()),
+                                      "tareas", new Gson().toJson(tareas, new TypeToken<ArrayList<Tarea>>(){}.getType()),
+                                      "pruebas", new Gson().toJson(pruebas, new TypeToken<ArrayList<Prueba>>(){}.getType()),
+                                      "juntadas", new Gson().toJson(juntadas, new TypeToken<ArrayList<Juntada>>(){}.getType())
+                    );
+                } catch (UnsupportedEncodingException | MalformedURLException e) {
+                    Main.logger.warn("Exeption parsing URL", e);
+                }
+                return createJson("status", "FAIL",
+                        "content", "User not valid");
             default:
                 return error404();
         }
     }
 
-    @Put("json")
+    @Post("json")
     public String restPut() {
         String resourceURI = getReference().toString();
         String rootURI = getRootRef().toString();
@@ -156,9 +217,185 @@ public class HttpsServer extends ServerResource {
         String retStr = null;
         switch (command) {
             case "tarea":
-
+                try {
+                    Main.database.tareasDB.put(Recordatorio.nextUUID(), new Tarea(splitQuery(new URL(resourceURI))));
+                    return createJson("status", "OK", "content", "Done");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
+            case "prueba":
+                try {
+                    Main.database.pruebaDB.put(Recordatorio.nextUUID(), new Prueba(splitQuery(new URL(resourceURI))));
+                    return createJson("status", "OK", "content", "Done");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
+            case "juntada":
+                try {
+                    Main.database.juntadaDB.put(Recordatorio.nextUUID(), new Juntada(splitQuery(new URL(resourceURI))));
+                    return createJson("status", "OK", "content", "Done");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
+            case "usuario":
+                try {
+                    Main.database.usuarioDB.put(Recordatorio.nextUUID(), new Usuario(splitQuery(new URL(resourceURI))));
+                    return createJson("status", "OK", "content", "Done");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
+            case "mensaje":
+                try {
+                    Main.database.mensajeDB.put(Recordatorio.nextUUID(), new Mensaje(splitQuery(new URL(resourceURI))));
+                    return createJson("status", "OK", "content", "Done");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
+            case "grupo":
+                try {
+                    Main.database.grupoDB.put(Recordatorio.nextUUID(), new Grupo(splitQuery(new URL(resourceURI))));
+                    return createJson("status", "OK", "content", "Done");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
         }
         return null;
+    }
+    @Delete("txt")
+    public String restDelete() {
+        String resourceURI = getReference().toString();
+        String rootURI = getRootRef().toString();
+        String routedPart = getReference().getBaseRef().toString();
+        String remainingPart = getReference().getRemainingPart();
+
+        String[] str = remainingPart.split("/");
+        System.out.println(Arrays.toString(str));
+        if (str.length < 2) return error404();
+        String command = str[1];
+        String retStr = null;
+        switch (command) {
+            case "tarea":
+                try {
+                    sync(Main.database.tareasDB.get(UUID.fromString(splitQuery(new URL(resourceURI)).get("recordatorioID"))).grupos);
+                    Main.database.tareasDB.remove(UUID.fromString(splitQuery(new URL(resourceURI)).get("recordatorioID")));
+                    return createJson("status", "OK", "content", "Done");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
+            case "prueba":
+                try {
+                    sync(Main.database.pruebaDB.get(UUID.fromString(splitQuery(new URL(resourceURI)).get("recordatorioID"))).grupos);
+                    Main.database.pruebaDB.remove(UUID.fromString(splitQuery(new URL(resourceURI)).get("recordatorioID")));
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
+            case "juntada":
+                try {
+                    sync(Main.database.juntadaDB.get(UUID.fromString(splitQuery(new URL(resourceURI)).get("recordatorioID"))).grupos);
+                    Main.database.juntadaDB.remove(UUID.fromString(splitQuery(new URL(resourceURI)).get("recordatorioID")));
+                    return createJson("status", "OK", "content", "Done");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
+            case "usuario":
+                try {
+                    Main.database.usuarioDB.remove(UUID.fromString(splitQuery(new URL(resourceURI)).get("usuarioID")));
+                    return createJson("status", "OK", "content", "Done");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
+            case "mensaje":
+                try {
+                    sync(Main.database.mensajeDB.get(UUID.fromString(splitQuery(new URL(resourceURI)).get("recordatorioID"))).grupos);
+                    Main.database.mensajeDB.remove(UUID.fromString(splitQuery(new URL(resourceURI)).get("mensajeID")));
+                    return createJson("status", "OK", "content", "Done");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
+            case "grupo":
+                try {
+                    Main.database.grupoDB.remove(UUID.fromString(splitQuery(new URL(resourceURI)).get("grupoID")));
+                    return createJson("status", "OK", "content", "Done");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
+        }
+        return createJson("status", "FAIL", "content", "Internal error, probably your fault");
+
+    }
+
+    private void sync(ArrayList<UUID> grupos) {
+        for(UUID uuid: grupos) {
+            Grupo grupo = Main.database.grupoDB.get(uuid);
+            for(UUID user: grupo.usuarios) {
+                Usuario usuario = Main.database.usuarioDB.get(user);
+                send(usuario.GCM, "Sync", "syncme");
+            }
+        }
+    }
+
+    private void send(String gcm, String content, String collapseKey) {
+        String messageId = Main.activeConnection.nextMessageId();
+        Map<String, String> payload = new HashMap<String, String>();
+        payload.put("Message", content);
+        payload.put("CCS", "El circo");
+        payload.put("EmbeddedMessageId", messageId);
+        String message = SmackCcsClient.createJsonMessage(gcm, messageId, payload,
+                collapseKey, true);
+
+        try {
+            Main.activeConnection.sendDownstreamMessage(message);
+        } catch (SmackException.NotConnectedException e) {
+            e.printStackTrace();
+        }
     }
 
     private String error404() {

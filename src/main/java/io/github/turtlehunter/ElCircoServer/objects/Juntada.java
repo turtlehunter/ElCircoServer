@@ -1,6 +1,7 @@
 package io.github.turtlehunter.ElCircoServer.objects;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.github.turtlehunter.ElCircoServer.Main;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -16,7 +17,17 @@ public class Juntada extends Recordatorio {
     public String description;
     public String direccion;
     public String date;
-    public ArrayList<Grupo> grupos;
+    public ArrayList<UUID> grupos;
+
+    public Juntada(Map<String, String> te) {
+        this.date = te.get("date");
+        this.description = te.get("description");
+        this.grupos = new Gson().fromJson(te.get("grupos"), new TypeToken<ArrayList<Grupo>>() {
+        }.getType());
+        this.recordatorioID = UUID.fromString(te.get("recordatorioID"));
+        this.titulo = te.get("titulo");
+        this.direccion = te.get("dirrecion");
+    }
 
     public UUID getRecordatorioID() {
         return recordatorioID;
@@ -50,19 +61,19 @@ public class Juntada extends Recordatorio {
         this.date = date;
     }
 
-    public ArrayList<Grupo> getGrupos() {
+    public ArrayList<UUID> getGrupos() {
         return grupos;
     }
 
-    public void setGrupos(ArrayList<Grupo> grupos) {
+    public void setGrupos(ArrayList<UUID> grupos) {
         this.grupos = grupos;
     }
 
-    public void addGrupo(Grupo grupo) {
+    public void addGrupo(UUID grupo) {
         this.grupos.add(grupo);
     }
 
-    public void removeGrupo(Grupo grupo) {
+    public void removeGrupo(UUID grupo) {
         this.grupos.remove(grupo);
     }
 

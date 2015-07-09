@@ -1,6 +1,7 @@
 package io.github.turtlehunter.ElCircoServer.objects;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.github.turtlehunter.ElCircoServer.Main;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -15,7 +16,16 @@ public class Mensaje {
     public String titulo;
     public String description;
     public String from;
-    public ArrayList<Grupo> grupos;
+    public ArrayList<UUID> grupos;
+
+    public Mensaje(Map<String, String> te) {
+        this.from = te.get("from");
+        this.description = te.get("description");
+        this.grupos = new Gson().fromJson(te.get("grupos"), new TypeToken<ArrayList<Grupo>>() {
+        }.getType());
+        this.mensajeID = UUID.fromString(te.get("mensajeID"));
+        this.titulo = te.get("titulo");
+    }
 
     public UUID getMensajeID() {
         return mensajeID;
@@ -49,19 +59,19 @@ public class Mensaje {
         this.from = from;
     }
 
-    public ArrayList<Grupo> getGrupos() {
+    public ArrayList<UUID> getGrupos() {
         return grupos;
     }
 
-    public void setGrupos(ArrayList<Grupo> grupos) {
+    public void setGrupos(ArrayList<UUID> grupos) {
         this.grupos = grupos;
     }
 
-    public void addGrupo(Grupo grupo) {
+    public void addGrupo(UUID grupo) {
         this.grupos.add(grupo);
     }
 
-    public void removeGrupo(Grupo grupo) {
+    public void removeGrupo(UUID grupo) {
         this.grupos.remove(grupo);
     }
 

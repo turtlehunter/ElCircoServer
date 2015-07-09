@@ -1,10 +1,12 @@
 package io.github.turtlehunter.ElCircoServer.objects;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.github.turtlehunter.ElCircoServer.Database;
 import io.github.turtlehunter.ElCircoServer.Main;
 import org.json.simple.JSONArray;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -20,6 +22,15 @@ public class Tarea extends Recordatorio {
         this.setGrupos(tarea.getGrupos());
         this.setRecordatorioID(tarea.getRecordatorioID());
         this.setTitulo(tarea.getTitulo());
+    }
+
+    public Tarea(Map<String, String> te) {
+        this.date = te.get("date");
+        this.description = te.get("description");
+        this.grupos = new Gson().fromJson(te.get("grupos"), new TypeToken<ArrayList<Grupo>>() {
+        }.getType());
+        this.recordatorioID = UUID.fromString(te.get("recordatorioID"));
+        this.titulo = te.get("materia");
     }
 
     public Map toMap() {

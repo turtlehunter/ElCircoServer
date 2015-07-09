@@ -3,6 +3,7 @@ package io.github.turtlehunter.ElCircoServer.objects;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -11,7 +12,7 @@ public abstract class Recordatorio {
     public String titulo;
     public String description;
     public String date;
-    public ArrayList<Grupo> grupos;
+    public ArrayList<UUID> grupos;
 
     public UUID getRecordatorioID() {
         return recordatorioID;
@@ -45,19 +46,19 @@ public abstract class Recordatorio {
         this.date = date;
     }
 
-    public ArrayList<Grupo> getGrupos() {
+    public ArrayList<UUID> getGrupos() {
         return grupos;
     }
 
-    public void setGrupos(ArrayList<Grupo> grupos) {
+    public void setGrupos(ArrayList<UUID> grupos) {
         this.grupos = grupos;
     }
 
-    public void addGrupo(Grupo grupo) {
+    public void addGrupo(UUID grupo) {
         this.grupos.add(grupo);
     }
 
-    public void removeGrupo(Grupo grupo) {
+    public void removeGrupo(UUID grupo) {
         this.grupos.remove(grupo);
     }
 
@@ -87,5 +88,9 @@ public abstract class Recordatorio {
                 .append(date)
                 .append(grupos)
                 .toHashCode();
+    }
+
+    public static UUID nextUUID() {
+        return UUID.randomUUID();
     }
 }

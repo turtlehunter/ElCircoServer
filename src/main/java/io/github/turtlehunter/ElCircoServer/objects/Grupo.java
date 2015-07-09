@@ -1,19 +1,34 @@
 package io.github.turtlehunter.ElCircoServer.objects;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.github.turtlehunter.ElCircoServer.Main;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class Grupo {
+public class Grupo implements Serializable{
     public UUID grupoID;
     public String name;
-    public ArrayList<Usuario> usuarios;
+    public ArrayList<UUID> usuarios;
+
+    public Grupo(String test, UUID uuid, ArrayList<UUID> usuarios) {
+        this.grupoID = uuid;
+        this.name = test;
+        this.usuarios = usuarios;
+    }
+
+    public Grupo(Map<String, String> te) {
+        this.name = te.get("name");
+        this.usuarios = new Gson().fromJson(te.get("usuarios"), new TypeToken<ArrayList<Grupo>>() {
+        }.getType());
+        this.grupoID = UUID.fromString(te.get("grupoID"));
+    }
 
     public UUID getGrupoID() {
         return grupoID;
@@ -31,18 +46,18 @@ public class Grupo {
         this.name = name;
     }
 
-    public ArrayList<Usuario> getUsuarios() {
+    public ArrayList<UUID> getUsuarios() {
         return usuarios;
     }
 
-    public void setUsuarios(ArrayList<Usuario> usuarios) {
+    public void setUsuarios(ArrayList<UUID> usuarios) {
         this.usuarios = usuarios;
     }
-    public void addUsuario(Usuario usuario) {
+    public void addUsuario(UUID usuario) {
         this.usuarios.add(usuario);
     }
 
-    public void removeUsuario(Usuario usuario) {
+    public void removeUsuario(UUID usuario) {
         this.usuarios.remove(usuario);
     }
 
