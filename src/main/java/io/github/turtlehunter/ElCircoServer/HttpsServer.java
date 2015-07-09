@@ -11,6 +11,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -216,6 +218,26 @@ public class HttpsServer extends ServerResource {
         String command = str[1];
         String retStr = null;
         switch (command) {
+            case "login":
+                try {
+                    String username = splitQuery(new URL(resourceURI)).get("username");
+                    String password = hash(splitQuery(new URL(resourceURI)).get("password"));
+                    for(UUID uuid: Main.database.usuarioDB.keySet()) {
+                        Usuario usuario = Main.database.usuarioDB.get(uuid);
+                        if(usuario.getUsuario().equals(username)) {
+                            if(usuario.getPassword().equals(password)) {
+                                return createJson("status", "OK", "content", usuario.getUsuarioID().toString());
+                            }
+                        }
+                    }
+                    return createJson("status", "FAIL", "content", "Invalid username or password");
+                } catch (UnsupportedEncodingException e) {
+                    Main.logger.trace("UnsupportedEncoding", e);
+                    return createJson("status", "FAIL", "content", "UnsupportedEncoding");
+                } catch (MalformedURLException e) {
+                    Main.logger.trace("MalformedURL", e);
+                    return createJson("status", "FAIL", "content", "MalformedURL");
+                }
             case "tarea":
                 try {
                     Main.database.tareasDB.put(Recordatorio.nextUUID(), new Tarea(splitQuery(new URL(resourceURI))));
@@ -285,6 +307,27 @@ public class HttpsServer extends ServerResource {
         }
         return null;
     }
+
+    private String hash(String password) {
+        MessageDigest md = null;
+        byte[] hash = null;
+        try {
+            md = MessageDigest.getInstance("SHA-512");
+            hash = md.digest(password.getBytes("UTF-8"));
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return convertToHex(hash);
+    }
+
+    private String convertToHex(byte[] raw) {
+        StringBuilder sb = new StringBuilder();
+        for (byte aRaw : raw) {
+            sb.append(Integer.toString((aRaw & 0xff) + 0x100, 16).substring(1));
+        }
+        return sb.toString();
+    }
+
     @Delete("txt")
     public String restDelete() {
         String resourceURI = getReference().toString();
